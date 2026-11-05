@@ -48,7 +48,18 @@ public sealed class DerivationTree(string symbol, int alternative, IReadOnlyList
     public IReadOnlyList<DerivationTree> Children => children;
     public bool IsTerminal => !ContextFreeGrammar.IsNonTerminal(symbol);
 
-    public IEnumerable<DerivationTree> Descendants() => children.SelectMany(c => c.Descendants()).Prepend(this);
+    /// <summary>This node and all nodes below it, in pre-order.</summary>
+    public IEnumerable<DerivationTree> Descendants()
+    {
+        var stack = new Stack<DerivationTree>();
+        stack.Push(this);
+        while (stack.Count > 0)
+        {
+            var node = stack.Pop();
+            yield return node;
+            for (int i = node.Children.Count - 1; i >= 0; i--) stack.Push(node.Children[i]);
+        }
+    }
 
     public bool Contains(string sym) => Descendants().Any(n => n.Symbol == sym);
 
@@ -185,34 +196,43 @@ public sealed class GrammarGenerator
             return new DerivationTree(symbol, index, children);
         }
 
+        // Reused across calls: Choose runs once per node, so it must not allocate.
+        private readonly List<int> candidates = new();
+        private readonly List<int> picks = new();
+
         private int Choose(string symbol, int nestUsed, int treeDepth)
         {
-            var alts = gen.grammar[symbol];
             var costs = gen.altCosts[symbol];
             var o = gen.options;
 
             // Hard limit: the cheapest way to finish must fit in the nesting budget. Non-empty by construction:
             // the parent only picked an alternative containing `symbol` because `symbol` could finish in budget.
-            var candidates = Enumerable.Range(0, alts.Count)
-                .Where(i => costs[i].Nest != Infinite && nestUsed + costs[i].Nest <= o.MaxDepth)
-                .ToList();
+            candidates.Clear();
+            for (int i = 0; i < costs.Length; i++)
+                if (costs[i].Nest != Infinite && nestUsed + costs[i].Nest <= o.MaxDepth) candidates.Add(i);
 
             if (nodes <= o.MaxNodes)
             {
-                var inTree = candidates.Where(i => treeDepth + costs[i].Tree <= o.MaxTreeDepth).ToList();
-                if (inTree.Count > 0)
+                picks.Clear();
+                foreach (var i in candidates)
+                    if (treeDepth + costs[i].Tree <= o.MaxTreeDepth) picks.Add(i);
+
+                if (picks.Count > 0)
                 {
-                    if (o.Focus is { } focus && focus.Rule == symbol && inTree.Contains(focus.Alternative)
+                    if (o.Focus is { } focus && focus.Rule == symbol && picks.Contains(focus.Alternative)
                         && rand.NextDouble() < o.FocusProbability)
                         return focus.Alternative;
-                    return inTree[rand.Next(inTree.Count)];
+                    return picks[rand.Next(picks.Count)];
                 }
             }
 
             // Out of budget: take the shortest way out.
-            int min = candidates.Min(i => costs[i].Tree);
-            var cheapest = candidates.Where(i => costs[i].Tree == min).ToList();
-            return cheapest[rand.Next(cheapest.Count)];
+            int min = int.MaxValue;
+            foreach (var i in candidates) min = Math.Min(min, costs[i].Tree);
+            picks.Clear();
+            foreach (var i in candidates)
+                if (costs[i].Tree == min) picks.Add(i);
+            return picks[rand.Next(picks.Count)];
         }
     }
 }
