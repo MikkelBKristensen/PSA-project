@@ -44,7 +44,7 @@ public class JSON
         }
     }
 
-    public union JsonValue(string, int, float, bool, Array, Null)
+    public union JsonValue(string, int, float, bool, Array, Object, Null)
     {
         public override string ToString()
         {
@@ -55,6 +55,7 @@ public class JSON
                 float f => f.ToString(CultureInfo.InvariantCulture),
                 bool b => b ? "true" : "false",
                 Array a => a.ToString(),
+                Object o => o.ToString(),
                 Null n => n.ToString(),
                 _ => "null"
             };
