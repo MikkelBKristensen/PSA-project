@@ -49,9 +49,14 @@ public static partial class Findings
             if (i >= 0) m = m[..i];
         }
 
-        m = QuotedCharRegex().Replace(m, "'_'"); // first, so a quoted quote ''' is handled
+        // Input echoed back in the message must go, or guided fuzzing farms endless "new" messages from it.
+        // System.Text.Json quotes it at the start ("'t }} NaN' is an invalid JSON literal."; the echo may itself
+        // contain quotes, so match up to the last "' is "); Newtonsoft appends it after a colon
+        // ("Invalid Unicode escape sequence: \ullx.", "Expected: *, got ]."). Quotes first, colon last.
+        m = LeadingEchoRegex().Replace(m, "'_' is ");
+        m = QuotedCharRegex().Replace(m, "'_'"); // before QuotedRegex, so a quoted quote ''' is handled
         m = QuotedRegex().Replace(m, "'_'");
-        m = TrailingCharRegex().Replace(m, ": _.");
+        m = AfterColonRegex().Replace(m, ": _");
         m = DigitsRegex().Replace(m, "0");
         return Escape(m.Trim());
     }
@@ -93,8 +98,11 @@ public static partial class Findings
     [GeneratedRegex("'[^']*'")]
     private static partial Regex QuotedRegex();
 
-    [GeneratedRegex(@": .\.$")]
-    private static partial Regex TrailingCharRegex();
+    [GeneratedRegex(@"^'.*' is ", RegexOptions.Singleline)]
+    private static partial Regex LeadingEchoRegex();
+
+    [GeneratedRegex(@": .*$", RegexOptions.Singleline)]
+    private static partial Regex AfterColonRegex();
 
     // Numbers that stand alone (positions, values), not ones that are part of a name like UTF-16.
     [GeneratedRegex(@"(?<![A-Za-z\d-])\d+")]

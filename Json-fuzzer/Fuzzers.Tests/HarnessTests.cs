@@ -62,7 +62,10 @@ public class HarnessTests(ITestOutputHelper output)
     [InlineData("Cannot transcode invalid UTF-16 string to UTF-8 JSON text.", "Cannot transcode invalid UTF-16 string to UTF-8 JSON text.")]
     [InlineData("''' is an invalid start of a value. LineNumber: 0 | BytePositionInLine: 12.", "'_' is an invalid start of a value.")]
     [InlineData("JSON integer 123456789012 is too large to parse. Path '[0]', line 1, position 13.", "JSON integer 0 is too large to parse.")]
-    [InlineData("Unexpected character encountered while parsing value: N. Path '', line 1, position 1.", "Unexpected character encountered while parsing value: _.")]
+    [InlineData("Unexpected character encountered while parsing value: N. Path '', line 1, position 1.", "Unexpected character encountered while parsing value: _")]
+    [InlineData("Invalid Unicode escape sequence: \\ullx. Path '', line 1, position 7.", "Invalid Unicode escape sequence: _")]
+    [InlineData("Error parsing comment. Expected: *, got ]. Path '', line 1, position 2.", "Error parsing comment. Expected: _")]
+    [InlineData("'t }': 'NaN' is an invalid JSON literal. Expected the literal 'true'. LineNumber: 0 | BytePositionInLine: 1.", "'_' is an invalid JSON literal. Expected the literal '_'.")]
     public void NormalizeMessageRemovesInputSpecificParts(string message, string expected)
     {
         Assert.Equal(expected, Findings.NormalizeMessage(message));

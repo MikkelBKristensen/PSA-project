@@ -3,7 +3,7 @@ using Xunit.Abstractions;
 
 namespace Fuzzers.Tests;
 
-public class UnitTest1(ITestOutputHelper outputHelper)
+public class OrginalTypedGrammarTests(ITestOutputHelper outputHelper)
 {
     private const int Samples = 500;
 
