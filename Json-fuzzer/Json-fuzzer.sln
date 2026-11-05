@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fuzzers", "Fuzzers\Fuzzers.csproj", "{EBFC6470-0708-4BFF-8D6D-B8BB864D1365}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EBFC6470-0708-4BFF-8D6D-B8BB864D1365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBFC6470-0708-4BFF-8D6D-B8BB864D1365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBFC6470-0708-4BFF-8D6D-B8BB864D1365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBFC6470-0708-4BFF-8D6D-B8BB864D1365}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
