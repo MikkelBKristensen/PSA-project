@@ -15,6 +15,7 @@ public sealed record WorkerMessage
     // stats: inputs run since this worker process started, and hits per signature since the last stats message
     public long Execs { get; init; }
     public Dictionary<string, long>? Hits { get; init; }
+    public Dictionary<string, long>? Metrics { get; init; }
 
     // finding: a new signature, or a shorter input for a known one
     public string? Signature { get; init; }

@@ -106,6 +106,7 @@ public sealed class Supervisor
         public Process? Process;
         public SharedInput? Shared;
         public long Execs;          // reported by the current process
+        public Dictionary<string, long>? Metrics;
         public long LastCounter;
         public TimeSpan LastProgress;
         public int Generation;
@@ -117,6 +118,7 @@ public sealed class Supervisor
         slot.LastCounter = slot.Shared.Counter;
         slot.LastProgress = clock.Elapsed + StartupGrace;
         slot.Execs = 0;
+        slot.Metrics = null;
 
         int seed = HashCode.Combine(baseSeed, slot.Index, slot.Generation++);
         var psi = WorkerStartInfo();
@@ -235,6 +237,7 @@ public sealed class Supervisor
         if (m.Type == WorkerMessage.StatsType)
         {
             slot.Execs = m.Execs;
+            slot.Metrics = m.Metrics;
             if (m.Hits is null) return;
             lock (gate)
             {
@@ -301,6 +304,14 @@ public sealed class Supervisor
 
     private long TotalExecs() => Interlocked.Read(ref retiredExecs) + slots.Sum(s => s.Execs);
 
+    /// <summary>Average of a worker metric over workers that report it (each worker has its own corpus).</summary>
+    private long? AverageMetric(string name)
+    {
+        var values = slots.Select(s => s.Metrics).Where(m => m is not null && m.ContainsKey(name))
+            .Select(m => m![name]).ToList();
+        return values.Count == 0 ? null : (long)values.Average();
+    }
+
     private string Elapsed() => clock.Elapsed.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
 
     private void PrintStatus()
@@ -312,8 +323,11 @@ public sealed class Supervisor
         {
             var byKind = findings.Values.GroupBy(f => f.Kind).OrderBy(g => g.Key)
                 .Select(g => $"{g.Key} {g.Count()}");
+            var guidance = AverageMetric("corpus") is { } corpus
+                ? $" | per worker: corpus {corpus:N0}, features {AverageMetric("features"):N0}"
+                : "";
             Console.WriteLine($"[{Elapsed()}] {execs:N0} inputs, {rate:N0}/s, {alive}/{workerCount} workers, " +
-                              $"{restarts} restarts | {findings.Count} findings: {string.Join(", ", byKind)}");
+                              $"{restarts} restarts | {findings.Count} findings: {string.Join(", ", byKind)}{guidance}");
         }
     }
 
@@ -324,12 +338,14 @@ public sealed class Supervisor
         {
             var statsPath = Path.Combine(outDir, "stats.csv");
             if (!File.Exists(statsPath))
-                File.WriteAllText(statsPath, "utc,strategy,elapsed_s,inputs,inputs_per_s,findings,crash,disagree,hang,process_crash,restarts\n");
+                File.WriteAllText(statsPath, "utc,strategy,elapsed_s,inputs,inputs_per_s,findings,crash,disagree,hang," +
+                                             "process_crash,restarts,corpus_per_worker,features_per_worker\n");
             int Count(string kind) => findings.Values.Count(f => f.Kind == kind);
             File.AppendAllText(statsPath, string.Join(",",
                 DateTime.UtcNow.ToString("O"), strategy, (long)clock.Elapsed.TotalSeconds, execs,
                 (long)(execs / Math.Max(1, clock.Elapsed.TotalSeconds)), findings.Count,
-                Count("crash"), Count("disagree"), Count("hang"), Count("process-crash"), restarts) + "\n");
+                Count("crash"), Count("disagree"), Count("hang"), Count("process-crash"), restarts,
+                AverageMetric("corpus"), AverageMetric("features")) + "\n");
 
             var csv = new StringBuilder("id,kind,hits,input_length,first_seen_utc,strategy,signature,origin\n");
             foreach (var f in findings.Values.OrderBy(f => f.Kind).ThenByDescending(f => f.Hits))

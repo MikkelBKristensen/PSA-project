@@ -30,7 +30,11 @@ public static class Worker
             if (tick.ElapsedMilliseconds >= 1000)
             {
                 if (!ParentAlive(parentPid)) return 0;
-                Send(new WorkerMessage { Type = WorkerMessage.StatsType, Execs = execs, Hits = hits });
+                Send(new WorkerMessage
+                {
+                    Type = WorkerMessage.StatsType, Execs = execs, Hits = hits,
+                    Metrics = source.Metrics?.ToDictionary(),
+                });
                 hits = new Dictionary<string, long>();
                 tick.Restart();
             }
@@ -39,6 +43,7 @@ public static class Worker
 
             shared.Write(next.Input);
             for (int i = 0; i < parsers.Length; i++) outcomes[i] = parsers[i].Parse(next.Input);
+            source.Feedback(parsers, outcomes);
             execs++;
 
             foreach (var signature in Findings.Signatures(parsers, outcomes))
