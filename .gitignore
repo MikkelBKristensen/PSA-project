@@ -8,3 +8,5 @@ obj/
 .idea/
 *.user
 *.suo
+# Fuzzer output
+fuzz-out/
