@@ -93,6 +93,7 @@ public sealed class GrammarGenerator
     private readonly ContextFreeGrammar grammar;
     private readonly GeneratorOptions options;
     private readonly Dictionary<string, (int Nest, int Tree)[]> altCosts = new();
+    private readonly Dictionary<string, int> minNest;
 
     public GrammarGenerator(ContextFreeGrammar grammar, GeneratorOptions? options = null)
     {
@@ -102,7 +103,7 @@ public sealed class GrammarGenerator
         if (!grammar.Defines(grammar.Start))
             throw new ArgumentException($"start symbol {grammar.Start} is not defined");
 
-        var minNest = MinCosts(grammar, NestWeight);
+        minNest = MinCosts(grammar, NestWeight);
         var minTree = MinCosts(grammar, _ => 1);
 
         if (minTree[grammar.Start] == Infinite)
@@ -119,8 +120,19 @@ public sealed class GrammarGenerator
     public static bool IsProductive(ContextFreeGrammar grammar) =>
         grammar.Defines(grammar.Start) && MinCosts(grammar, _ => 1)[grammar.Start] != Infinite;
 
-    public DerivationTree GenerateTree(Random rand) =>
-        new Run(this, rand).Expand(grammar.Start, NestWeight(grammar.Start), 1);
+    public DerivationTree GenerateTree(Random rand) => GenerateTree(rand, grammar.Start);
+
+    /// <summary>
+    /// A random derivation of <paramref name="symbol"/>, with its own depth budget. Used by tree mutations to
+    /// grow new subtrees; once inserted deep in a tree, the total depth may exceed MaxDepth.
+    /// </summary>
+    public DerivationTree GenerateTree(Random rand, string symbol)
+    {
+        if (!grammar.Defines(symbol)) throw new ArgumentException($"{symbol} is not defined");
+        if (minNest[symbol] > options.MaxDepth)
+            throw new ArgumentException($"{symbol} cannot be derived within MaxDepth {options.MaxDepth}");
+        return new Run(this, rand).Expand(symbol, NestWeight(symbol), 1);
+    }
 
     public string Generate(int? seed = null) =>
         GenerateTree(seed is null ? new Random() : new Random(seed.Value)).ToString();
