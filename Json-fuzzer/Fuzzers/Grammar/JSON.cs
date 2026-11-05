@@ -4,10 +4,6 @@ namespace Fuzzers.Grammar;
 
 public class JSON
 {
-    
-    
-    
-    // Terminals
     public class KeyValue(string k, JsonValue v)
     {
         public override string ToString()
@@ -15,11 +11,6 @@ public class JSON
             return $"\"{k}\":{v}";
         }
     }
-    
-
-
-    // Non-terminals
-
 
     public class Object(Members? members)
     {
