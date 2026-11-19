@@ -47,4 +47,30 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 
         }
     }
+
+    [Fact]
+    public void ObjectNeverEmpty()
+    {
+        var options = new GeneratorConfig
+        {
+            ObjectEmptyWeight = 0
+        };
+
+        for (int i = 0; i < 10; i++)
+        {
+            var json = JsonAsData.GenerateJson(10, 10, 10, options);
+            try
+            {
+                var isEmpty = JsonNode.Parse(json) is JsonObject o && o.Count > 0;
+
+                Assert.True(isEmpty);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail($"{e.Message}\n{json}");
+            }
+
+        }
+    }
+
 }
