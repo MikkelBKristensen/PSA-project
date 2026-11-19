@@ -2,22 +2,45 @@
 
 public static class JsonAsData
 {
-
-    private static string Expand(string startSymbol, int maxDepth, int maxWidth, int mutatedTerminals)
+    private static string Expand(string startSymbol, int maxDepth, int maxWidth, int mutatedTerminals, Random rand)
     {
-        return "";
+        var options = Grammar[startSymbol];
+        var index = rand.Next(options.Count);
+        var productions = options[index];
+        
+        if (_terminals.Contains(startSymbol))
+        {
+            var terminal = productions[0];
+            return terminal;
+        }
+
+        var production = string.Empty;
+        foreach (var option in productions)
+        {
+            if (IsProduction(option))
+            {
+                // TODO: Implement the maxDepth stuff correctly
+                // TODO: Implement mutatedTerminals
+                production += Expand(option, maxDepth--, maxWidth--, mutatedTerminals, rand);
+            }
+            else
+            {
+                production += option;
+            }
+        }
+        return production;
     }
-    
 
-    public static string GenerateJson(int maxDepth, int maxWidth, int mutatedTerminals)
+    private static bool IsProduction(string s)
     {
+        return s.StartsWith('<');
+    }
+
+    public static string GenerateJson(int maxDepth, int maxWidth, int mutatedTerminals, int? seed = null)
+    {
+        var rand = seed != null ? new Random(seed.Value) : new Random();
         
-        
-        
-        
-        
-        
-        return "";
+        return Expand("<object>", maxDepth, maxWidth, mutatedTerminals, rand);
     }
     
     
@@ -28,26 +51,33 @@ public static class JsonAsData
         "é", "€", "😀",
     ];
     
+    private static List<string> _terminals =
+    [
+        "<zero>", "<wschar>", "<onenine>", "<char>"
+    ];
     
-    private static readonly Dictionary<string, List<string[]>> grammar = new()
+    private static readonly Dictionary<string, List<string[]>> Grammar = new()
     {
         { "<object>", [["{","<members>","}"], ["{","<ws>","}"]] },
-        { "<members>", [["<keyValue>"], ["<keyValue>","<ws>","<members>"]] },
+        { "<members>", [["<keyValue>"], ["<keyValue>", ",", "<ws>","<members>"]] },
         { "<keyValue>", [["<string>","<ws>",":","<ws>","<value>"]] },
-        { "<value>", [["<string>"], ["<int>"], ["<float>"], ["<boolean>"], ["<array>"], ["<object>"], ["null"]] },
+        // TODO: Reintroduce float as <value> option
+        { "<value>", [["<string>"], ["<int>"], ["<boolean>"], ["<array>"], ["<object>"], ["null"]] },
+        { "<array>", [["[", "<ws>", "]"], ["[", "<elements>", "]"]]},
+        { "<elements>", [["<element>"], ["<elements>",",","<elements>"]]},
+        { "<element>", [["<ws>","<value>","<ws>"]]},
         { "<string>", [["\"", "<characters>", "\""]] },
-        { "<characters>", [["<char>"], ["<char>", "<character>"]] },
-        { "<char>", [[.. PlainCharacters.Select(c => c.ToString())]]},
-        { "<int>", [["<digit>"], ["-", "<digit>"], ["-", "<digits>"], ["digits"]] },
-        { "<digits>", [["<digit>"], ["<digit>","<digits>"]] },
-        { "<digit>", [["0"], ["<onenine>"]] },
-        { "<onenine>", [[.. "123456789".Select(d => d.ToString())]] },
+        { "<characters>", [["<char>"], ["<char>", "<characters>"]] },
+        { "<char>", [.. PlainCharacters.Select(c => new[] { c.ToString() })] },
+        { "<int>", [["<digit>"], ["-", "<digit>"], ["-", "<digits>"], ["<digits>"]] },
+        { "<digits>", [["<digit>"], ["<onenine>","<digits>"]] },
+        { "<digit>", [["<zero>"], ["<onenine>"]] },
+        { "<zero>", [["0"]]},
+        { "<onenine>", [.. "123456789".Select(d => new[] { d.ToString() })] },
+        { "<boolean>", [["true"], ["false"]]},
         //{ "<float>", [["<digit>"], ["-", "<digit>"], ["-", "<digits>"], ["digits"]] },
         //{ "<exponent>", ["1"] },
         { "<ws>", [[], ["<wschar>"], ["<wschar>","<ws>"]]},
-        { "<wschar>", [[""], [" "], ["\n"], ["\r"], ["\t"]] },
-        { "<elements>", [["<element"], ["<elements>",",","<elements>"]]},
-        { "<element>", [["<ws>","<value>","<ws>"]]},
-        { "<array>", [["[", "<ws>", "]"], ["[", "<elements>", "]"]]},
+        { "<wschar>", [[""], [" "], ["\n"], ["\t"]] },
     };
 }
