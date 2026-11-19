@@ -3,11 +3,7 @@ using Xunit.Abstractions;
 
 namespace Fuzzers.Tests;
 
-<<<<<<<< HEAD:Json-fuzzer/Fuzzers.Tests/OriginalTypedGrammarTests.cs
-public class OriginalTypedGrammarTests(ITestOutputHelper outputHelper)
-========
 public class TypedGrammarTests(ITestOutputHelper outputHelper)
->>>>>>>> create-grammar-as-data:Json-fuzzer/Fuzzers.Tests/TypedGrammarTests.cs
 {
     private const int Samples = 500;
 
