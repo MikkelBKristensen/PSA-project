@@ -70,4 +70,11 @@ public record GeneratorConfig
     public float WsCharSpaceWeight = 1f;
     public float WsCharNewlineWeight = 1f;
     public float WsCharTabWeight = 1f;
+
+    public static GeneratorConfig Default() => {
+        return GeneratorConfig
+    {
+
+    }
+}
 }
