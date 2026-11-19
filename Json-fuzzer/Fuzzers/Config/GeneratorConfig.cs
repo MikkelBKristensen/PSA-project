@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Fuzzers.Config;
 
 public record GeneratorConfig
@@ -71,10 +73,42 @@ public record GeneratorConfig
     public float WsCharNewlineWeight = 1f;
     public float WsCharTabWeight = 1f;
 
-    public static GeneratorConfig Default() => {
-        return GeneratorConfig
+    public static GeneratorConfig Default()
     {
-
+        return new GeneratorConfig
+        {
+            MaxDepth = 63,
+            ObjectMembersWeight = 10f,
+            MembersSingleWeight = 5f,
+            ValueBooleanWeight = 0.7f,
+            ValueArrayWeight = 0.5f,
+            ValueObjectWeight = 0.2f,
+            ValueNullWeight = 0.1f,
+            ArrayEmptyWeight = 0.05f,
+            ElementsSingleWeight = 0.2f,
+            CharactersMultipleWeight = 35f,
+            IntDigitWeight = 0.2f,
+            IntNegativeDigitWeight = 0.2f,
+            DigitsSingleWeight = 0.1f,
+            WsSingleWeight = 5f,
+            WsCharEmptyWeight = 0.5f,
+            WsCharNewlineWeight = 0.05f,
+            WsCharTabWeight = 0.05f,
+        };
     }
-}
+
+    public static GeneratorConfig RandomConfig(int seed)
+    {
+        var rand = new Random(seed);
+        var config = new GeneratorConfig();
+
+        foreach (var field in typeof(GeneratorConfig).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (field.FieldType == typeof(float))
+                field.SetValue(config, rand.Next(1, 30) * 1f);
+
+        }
+
+        return config;
+    }
 }

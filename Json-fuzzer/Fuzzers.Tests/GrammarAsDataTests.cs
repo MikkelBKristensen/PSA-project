@@ -8,6 +8,8 @@ namespace Fuzzers.Tests;
 
 public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 {
+    private static readonly int _seed = 87687638;
+
     [Fact]
     public void CrazyJsonInput()
     {
@@ -129,4 +131,68 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
         }
     }
 
+    [Fact]
+    public void FuzzingTest()
+    {
+        var options = new GeneratorConfig();
+
+        for (int i = 0; i < 100000; i++)
+        {
+            var seed = _seed + i;
+            var json = JsonAsData.GenerateJson(10, 10, options, seed);
+            try
+            {
+                var jsonDocument = JsonNode.Parse(json);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail($"{e.Message}\n{json}");
+            }
+        }
+    }
+
+    [Fact]
+    public void VisualOutputTest()
+    {
+        var options = GeneratorConfig.Default();
+
+        var json = JsonAsData.GenerateJson(10, 10, options, _seed);
+
+        try
+        {
+            var jsonObject = JsonNode.Parse(json);
+            outputHelper.WriteLine(jsonObject.ToString());
+
+            Assert.True(json.Length > 10);
+        }
+        catch (Exception e)
+        {
+            Assert.Fail($"{e.Message}\n{json}");
+        }
+    }
+
+    [Fact]
+    public void FuzzConfigTest()
+    {
+        for (int i = 0; i < 40; i++)
+        {
+            var seed = _seed + i;
+            var options = GeneratorConfig.RandomConfig(seed);
+
+            for (int j = 0; j < 10; j++)
+            {
+                var innerSeed = seed + j;
+
+                var json = JsonAsData.GenerateJson(10, 10, options, innerSeed);
+                try
+                {
+                    var jsonDocument = JsonNode.Parse(json);
+                }
+                catch (Exception e)
+                {
+                    Assert.Fail($"{e.Message}\n{json}");
+                }
+            }
+        }
+    }
 }

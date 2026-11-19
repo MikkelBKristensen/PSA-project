@@ -7,3 +7,10 @@
 - Before properly implementing depth, we would have instances of tests never terminating, since it spent so much time generating what would probably end up being nearly infinite objects.
   **Fixed by stopping generation of the depth producing production <object>**
 
+## Ideas
+
+Set null as key during mutation
+
+## AI Usage
+
+AI was used to generate the scripts used for running tests with code coverage metrics.

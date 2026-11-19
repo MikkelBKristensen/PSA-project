@@ -22,4 +22,38 @@
       <ProjectReference Include="..\Fuzzers\Fuzzers.csproj" />
     </ItemGroup>
 
+    <!--
+      System.Text.Json coverage mode, used by ../coverage.sh (-p:StjCoverage=true).
+
+      Coverlet can only instrument IL-only assemblies in the test output folder that have a PDB. The shared
+      framework's System.Text.Json.dll is ReadyToRun (precompiled) and loaded from the dotnet install, and
+      the NuGet package of the same version loses the version tie to it. So in this mode the tests build
+      self-contained, and the framework copy in bin/ is overwritten with the IL-only package DLL, plus the
+      PDB that coverage.sh downloads from the Microsoft symbol server.
+    -->
+    <PropertyGroup Condition="'$(StjCoverage)' == 'true'">
+        <RuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+        <DefineConstants>$(DefineConstants);STJ_COVERAGE</DefineConstants>
+        <!-- Same version as the runtime we build against, so the swapped-in DLL matches the rest of the framework. -->
+        <StjPackageVersion Condition="'$(StjPackageVersion)' == ''">$(BundledNETCoreAppPackageVersion)</StjPackageVersion>
+        <StjPackageDir>$(NuGetPackageRoot)system.text.json/$(StjPackageVersion)/lib/$(TargetFramework)/</StjPackageDir>
+        <!-- Per version: a PDB from another build silently makes Coverlet skip the DLL. -->
+        <StjSymbolsDir Condition="'$(StjSymbolsDir)' == ''">$(MSBuildProjectDirectory)/obj/stj-symbols/$(StjPackageVersion)/</StjSymbolsDir>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(StjCoverage)' == 'true'">
+        <!-- Download only: a PackageReference would be pruned or lose to the framework copy. -->
+        <PackageDownload Include="System.Text.Json" Version="[$(StjPackageVersion)]" />
+    </ItemGroup>
+
+    <Target Name="SwapInInstrumentableSystemTextJson" AfterTargets="Build" Condition="'$(StjCoverage)' == 'true'">
+        <Error Condition="!Exists('$(StjPackageDir)System.Text.Json.dll')"
+               Text="System.Text.Json $(StjPackageVersion) package not found at $(StjPackageDir). Run a restore with -p:StjCoverage=true first." />
+        <Error Condition="!Exists('$(StjSymbolsDir)System.Text.Json.pdb')"
+               Text="System.Text.Json.pdb not found in $(StjSymbolsDir). coverage.sh downloads it with dotnet-symbol." />
+        <Copy SourceFiles="$(StjPackageDir)System.Text.Json.dll;$(StjSymbolsDir)System.Text.Json.pdb"
+              DestinationFolder="$(OutDir)" />
+    </Target>
+
 </Project>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Coverlet settings for System.Text.Json coverage. Used by coverage.sh. -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Only the parser under test; our own code is not what we measure here. -->
+          <Include>[System.Text.Json]*</Include>
+          <Exclude>[Fuzzers]*,[Fuzzers.Tests]*,[xunit*]*</Exclude>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <SkipAutoProps>true</SkipAutoProps>
+          <!-- The PDB comes from the symbol server, so source paths are SourceLink URLs into dotnet/runtime on GitHub. -->
+          <UseSourceLink>true</UseSourceLink>
+          <!-- None of those sources exist locally; without this Coverlet skips the module ("pdb without any local source files"). -->
+          <ExcludeAssembliesWithoutSources>None</ExcludeAssembliesWithoutSources>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

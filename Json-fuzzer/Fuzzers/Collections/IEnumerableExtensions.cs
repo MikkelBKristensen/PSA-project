@@ -27,7 +27,10 @@ public static class IEnumerableExtensions
                     return item.Value;
             }
 
-            return default!;
+            var list = sequence.ToList();
+            var pick = rand.Next(0, list.Count);
+
+            return list[pick];
         }
     }
 }

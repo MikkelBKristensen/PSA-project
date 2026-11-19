@@ -24,7 +24,7 @@ public static class JsonAsData
         }
 
         var options = Grammar(config)[startSymbol];
-        var productions = options.RandomElementByWeight(option => option.Weight).Production;
+        var productions = options.RandomElementByWeight(option => option.Weight, rand).Production;
 
         if (_terminals.Contains(startSymbol))
         {

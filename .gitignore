@@ -10,3 +10,4 @@ obj/
 *.suo
 # Fuzzer output
 fuzz-out/
+coverage-out/
