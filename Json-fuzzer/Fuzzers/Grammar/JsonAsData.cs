@@ -15,6 +15,14 @@ public static class JsonAsData
     {
         config ??= new GeneratorConfig();
 
+        if (maxDepth <= 0)
+        {
+            config = config with
+            {
+                ValueObjectWeight = 0
+            };
+        }
+
         var options = Grammar(config)[startSymbol];
         var productions = options.RandomElementByWeight(option => option.Weight).Production;
 
@@ -30,9 +38,14 @@ public static class JsonAsData
         {
             if (IsProduction(option))
             {
+                if (option == "<object>")
+                {
+                    maxDepth--;
+                }
+
                 // TODO: Implement the maxDepth stuff correctly
                 // TODO: Implement mutatedTerminals
-                production += Expand(option, maxDepth--, maxWidth--, mutatedTerminals, rand, config);
+                production += Expand(option, maxDepth, maxWidth--, mutatedTerminals, rand, config);
             }
             else
             {
@@ -48,15 +61,18 @@ public static class JsonAsData
     }
 
     public static string GenerateJson(
-            int maxDepth,
             int maxWidth,
             int mutatedTerminals,
-            GeneratorConfig? config = null,
+            GeneratorConfig config,
             int? seed = null)
     {
+        if (config.MaxDepth <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(config), "MaxDepth must larger than 0");
+        }
         var rand = seed != null ? new Random(seed.Value) : new Random();
 
-        return Expand("<object>", maxDepth, maxWidth, mutatedTerminals, rand, config);
+        return Expand("<object>", config.MaxDepth, maxWidth, mutatedTerminals, rand, config);
     }
 
 
@@ -67,7 +83,7 @@ public static class JsonAsData
         "é", "€", "😀",
     ];
 
-    private static List<string> _terminals =
+    private static readonly List<string> _terminals =
     [
         "<zero>", "<wschar>", "<onenine>", "<char>"
     ];
@@ -100,7 +116,7 @@ public static class JsonAsData
         ]},
         { "<elements>", [
             (["<element>"], config.ElementsSingleWeight),
-            (["<elements>", ",", "<elements>"], config.ElementsMultipleWeight),
+            (["<element>", ",", "<elements>"], config.ElementsMultipleWeight),
         ]},
         { "<element>", [
             (["<ws>", "<value>", "<ws>"], 1f),

@@ -11,7 +11,9 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
     [Fact]
     public void CrazyJsonInput()
     {
-        var json = JsonAsData.GenerateJson(10, 10, 10);
+        var config = new GeneratorConfig();
+
+        var json = JsonAsData.GenerateJson(10, 10, config);
         try
         {
             JsonDocument.Parse(json);
@@ -33,7 +35,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 
         for (int i = 0; i < 10000; i++)
         {
-            var json = JsonAsData.GenerateJson(10, 10, 10, options);
+            var json = JsonAsData.GenerateJson(10, 10, options);
             try
             {
                 var isEmpty = JsonNode.Parse(json) is JsonObject o && o.Count == 0;
@@ -53,17 +55,71 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
     {
         var options = new GeneratorConfig
         {
-            ObjectEmptyWeight = 0
+            ObjectEmptyWeight = 0,
+            MaxDepth = 10,
         };
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 10000; i++)
         {
-            var json = JsonAsData.GenerateJson(10, 10, 10, options);
+            var json = JsonAsData.GenerateJson(10, 10, options);
             try
             {
                 var isEmpty = JsonNode.Parse(json) is JsonObject o && o.Count > 0;
 
                 Assert.True(isEmpty);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail($"{e.Message}\n{json}");
+            }
+
+        }
+    }
+
+    [Fact]
+    public void CharWeightTest()
+    {
+        var options = new GeneratorConfig
+        {
+            CharactersMultipleWeight = 100,
+            ObjectEmptyWeight = 0,
+            MaxDepth = 10,
+        };
+
+
+        var json = JsonAsData.GenerateJson(10, 10, options);
+
+        try
+        {
+            JsonNode.Parse(json);
+            outputHelper.WriteLine(json);
+
+            Assert.True(json.Length > 10);
+        }
+        catch (Exception e)
+        {
+            Assert.Fail($"{e.Message}\n{json}");
+        }
+
+    }
+
+
+    [Fact]
+    public void CharWeightedHigh()
+    {
+        var options = new GeneratorConfig
+        {
+            CharactersMultipleWeight = 20,
+            ObjectEmptyWeight = 0,
+            MaxDepth = 10,
+        };
+
+        for (int i = 0; i < 10000; i++)
+        {
+            var json = JsonAsData.GenerateJson(10, 10, options);
+            try
+            {
+                JsonNode.Parse(json);
             }
             catch (Exception e)
             {

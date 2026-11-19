@@ -5,6 +5,9 @@ public record GeneratorConfig
     // Define weights for productions and terminals.
     // Weights are relative within a single rule; all default to 1 (uniform choice).
 
+    // General
+    public int MaxDepth = 10;
+
     // <object>
     public float ObjectMembersWeight = 1f;
     public float ObjectEmptyWeight = 1f;
