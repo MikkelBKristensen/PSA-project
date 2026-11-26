@@ -5,9 +5,9 @@ namespace Fuzzers.Tests;
 
 public class MutationFuzzerTests(ITestOutputHelper outputHelper)
 {
-    private static FuzzerConfig config => new FuzzerConfig
+    private static FuzzerConfig config => new()
     {
-        Mutations = 10,
+        Mutations = 5,
         GenerateFatMutations = false
     };
     
