@@ -18,16 +18,14 @@ public class Fuzzer
 
     public string Fuzz(string input)
     {
-        var mutatedString = string.Empty;
-
         for (int i = 0; i < _config.Mutations; i++)
         {
             var index = _random.Next(0, input.Length);
 
-            mutatedString = Mutate(input, index);
+            input = Mutate(input, index);
         }
 
-        return mutatedString;
+        return input;
     }
 
     private string Mutate(string input, int start)
@@ -41,7 +39,7 @@ public class Fuzzer
         {
             Fuzzes.Delete => Delete(input, start, start),
             Fuzzes.Insert => Insert(input, start, generatedMutation),
-            Fuzzes.Replace => Replace(input, start, generatedMutation.Length, generatedMutation),
+            Fuzzes.Replace => Replace(input, start, start + generatedMutation.Length, generatedMutation),
             // TODO: Implement FullFlip and BitFlip
             // Fuzzes.Flip => Flip(input, start, true),
             // Fuzzes.BitFlip => Flip(input, start),
@@ -98,7 +96,7 @@ public class Fuzzer
     private string Replace(string input, int start, int end, string replaceWith)
     {
         var beforeSpan = input.AsSpan()[..start];
-        var afterSpan = input.AsSpan()[(end + 1)..];
+        var afterSpan = input.AsSpan()[end..];
 
         return string.Concat(beforeSpan, replaceWith, afterSpan);
     }
