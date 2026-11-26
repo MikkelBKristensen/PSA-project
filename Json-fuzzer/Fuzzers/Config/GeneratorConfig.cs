@@ -9,6 +9,7 @@ public record GeneratorConfig
 
     // General
     public int MaxDepth = 10;
+    public int MaxWidth = 10;
 
     // <object>
     public float ObjectMembersWeight = 1f;

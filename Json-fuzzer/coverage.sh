@@ -69,7 +69,7 @@ dotnet reportgenerator \
   "-reports:$(IFS=';'; echo "${REPORTS[*]}")" \
   "-targetdir:$OUT/report/parser" \
   "-reporttypes:TextSummary" \
-  "-classfilters:+System.Text.Json.Utf8JsonReader*;+System.Text.Json.JsonReaderHelper*;+System.Text.Json.JsonDocument*;+System.Text.Json.JsonElement*;+System.Text.Json.JsonProperty;+System.Text.Json.Nodes.*;+System.Text.Json.ThrowHelper" \
+  "-classfilters:+System.Text.Json.Utf8JsonReader*;+System.Text.Json.JsonReaderHelper*;+System.Text.Json.JsonDocument*;+System.Text.Json.JsonElement*;+System.Text.Json.JsonProperty;+System.Text.Json.ThrowHelper" \
   -verbosity:Warning
 
 echo

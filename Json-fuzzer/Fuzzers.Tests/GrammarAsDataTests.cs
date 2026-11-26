@@ -184,6 +184,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
                 var innerSeed = seed + j;
 
                 var json = JsonAsData.GenerateJson(10, 10, options, innerSeed);
+
                 try
                 {
                     var jsonDocument = JsonNode.Parse(json);

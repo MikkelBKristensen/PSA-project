@@ -1,5 +1,7 @@
-﻿using Fuzzers.Collections;
+﻿using System.Text.Json;
+using Fuzzers.Collections;
 using Fuzzers.Config;
+using Fuzzers.Util;
 
 namespace Fuzzers.Grammar;
 
@@ -8,7 +10,7 @@ public static class JsonAsData
     private static string Expand(
             string startSymbol,
             int maxDepth,
-            int maxWidth,
+            int maxWidth, // TODO ¿implement?
             int mutatedTerminals,
             Random rand,
             GeneratorConfig? config = null)
@@ -70,18 +72,16 @@ public static class JsonAsData
         {
             throw new ArgumentOutOfRangeException(nameof(config), "MaxDepth must larger than 0");
         }
+
+        if (config.MaxWidth <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(config), "MaxWidth must larger than 0");
+        }
+
         var rand = seed != null ? new Random(seed.Value) : new Random();
 
         return Expand("<object>", config.MaxDepth, maxWidth, mutatedTerminals, rand, config);
     }
-
-
-    // Every printable ASCII character except '"' and '\', plus a few multi-byte UTF-8 characters.
-    private static readonly string[] PlainCharacters =
-    [
-        .. Enumerable.Range(0x20, 0x7F - 0x20).Select(c => ((char)c).ToString()).Where(c => c is not "\"" and not "\\"),
-        "é", "€", "😀",
-    ];
 
     private static readonly List<string> _terminals =
     [
@@ -129,7 +129,7 @@ public static class JsonAsData
             (["<char>", "<characters>"], config.CharactersMultipleWeight),
         ]},
         { "<char>", [
-            .. PlainCharacters.Select(c => (new[] { c }, config.CharWeight)),
+            .. Alphabet.PlainCharacters.Select(c => (new[] { c }, config.CharWeight)),
         ]},
         { "<int>", [
             (["<digit>"], config.IntDigitWeight),
