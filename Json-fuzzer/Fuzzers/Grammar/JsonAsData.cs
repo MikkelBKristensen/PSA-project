@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Fuzzers.Collections;
+﻿using Fuzzers.Collections;
 using Fuzzers.Config;
 using Fuzzers.Util;
 
@@ -10,28 +9,37 @@ public static class JsonAsData
     private static string Expand(
             string startSymbol,
             int maxDepth,
-            int maxWidth, // TODO ¿implement?
-            int mutatedTerminals,
+            int maxWidth,
             Random rand,
-            GeneratorConfig? config = null)
+            GeneratorConfig config)
     {
-        config ??= new GeneratorConfig();
+        if (_containers.Contains(startSymbol))
+        {
+            maxDepth--;
+            maxWidth = config.MaxWidth;
+        }
+        else if (_widthElements.Contains(startSymbol))
+        {
+            maxWidth--;
+        }
+
+        var effective = config;
 
         if (maxDepth <= 0)
         {
-            config = config with
-            {
-                ValueObjectWeight = 0
-            };
+            effective = effective with { ValueObjectWeight = 0, ValueArrayWeight = 0 };
+        }
+        if (maxWidth <= 0)
+        {
+            effective = effective with { ElementsMultipleWeight = 0, MembersMultipleWeight = 0 };
         }
 
-        var options = Grammar(config)[startSymbol];
+        var options = Grammar(effective)[startSymbol];
         var productions = options.RandomElementByWeight(option => option.Weight, rand).Production;
 
         if (_terminals.Contains(startSymbol))
         {
-            var terminal = productions[0];
-            return terminal;
+            return productions[0];
         }
 
         var production = string.Empty;
@@ -40,14 +48,8 @@ public static class JsonAsData
         {
             if (IsProduction(option))
             {
-                if (option == "<object>")
-                {
-                    maxDepth--;
-                }
-
-                // TODO: Implement the maxDepth stuff correctly
                 // TODO: Implement mutatedTerminals
-                production += Expand(option, maxDepth, maxWidth--, mutatedTerminals, rand, config);
+                production += Expand(option, maxDepth, maxWidth, rand, config);
             }
             else
             {
@@ -63,8 +65,6 @@ public static class JsonAsData
     }
 
     public static string GenerateJson(
-            int maxWidth,
-            int mutatedTerminals,
             GeneratorConfig config,
             int? seed = null)
     {
@@ -80,13 +80,25 @@ public static class JsonAsData
 
         var rand = seed != null ? new Random(seed.Value) : new Random();
 
-        return Expand("<object>", config.MaxDepth, maxWidth, mutatedTerminals, rand, config);
+        return Expand("<object>", config.MaxDepth, config.MaxWidth, rand, config);
     }
 
     private static readonly List<string> _terminals =
     [
         "<zero>", "<wschar>", "<onenine>", "<char>"
     ];
+    private static readonly HashSet<string> _widthElements = new HashSet<string>
+    {
+         "<members>",
+         "<elements>"
+    };
+
+    private static readonly HashSet<string> _containers = new HashSet<string>
+    {
+        "<object>",
+        "<array>"
+    };
+
 
     private static Dictionary<string, List<(string[] Production, float Weight)>> Grammar(GeneratorConfig config) => new()
     {

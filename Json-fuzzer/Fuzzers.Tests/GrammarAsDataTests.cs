@@ -8,14 +8,21 @@ namespace Fuzzers.Tests;
 
 public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 {
-    private static readonly int _seed = 87687638;
+    private static readonly int _seed = 87686338;
+
+    private static int MaxWidth(JsonNode? node) => node switch
+    {
+        JsonObject obj => Math.Max(obj.Count, obj.Select(kv => MaxWidth(kv.Value)).DefaultIfEmpty(0).Max()),
+        JsonArray arr => Math.Max(arr.Count, arr.Select(MaxWidth).DefaultIfEmpty(0).Max()),
+        _ => 0,
+    };
 
     [Fact]
     public void CrazyJsonInput()
     {
         var config = new GeneratorConfig();
 
-        var json = JsonAsData.GenerateJson(10, 10, config);
+        var json = JsonAsData.GenerateJson(config);
         try
         {
             JsonDocument.Parse(json);
@@ -28,6 +35,22 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
     }
 
     [Fact]
+    public void WidthOfOne_NeverExeeds_WidthOfOne()
+    {
+        var options = GeneratorConfig.Default() with
+        {
+            MaxWidth = 1
+        };
+
+        var json = JsonAsData.GenerateJson(options, _seed);
+        var jsonNode = JsonNode.Parse(json);
+
+        outputHelper.WriteLine(jsonNode.ToString());
+
+        Assert.Equal(1, MaxWidth(jsonNode));
+    }
+
+    [Fact]
     public void ObjectAlwaysEmpty()
     {
         var options = new GeneratorConfig
@@ -37,7 +60,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 
         for (int i = 0; i < 10000; i++)
         {
-            var json = JsonAsData.GenerateJson(10, 10, options);
+            var json = JsonAsData.GenerateJson(options);
             try
             {
                 var isEmpty = JsonNode.Parse(json) is JsonObject o && o.Count == 0;
@@ -55,7 +78,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
     [Fact]
     public void ObjectNeverEmpty()
     {
-        var options = new GeneratorConfig
+        var options = GeneratorConfig.Default() with
         {
             ObjectEmptyWeight = 0,
             MaxDepth = 10,
@@ -63,7 +86,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 
         for (int i = 0; i < 10000; i++)
         {
-            var json = JsonAsData.GenerateJson(10, 10, options);
+            var json = JsonAsData.GenerateJson(options);
             try
             {
                 var isEmpty = JsonNode.Parse(json) is JsonObject o && o.Count > 0;
@@ -89,7 +112,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
         };
 
 
-        var json = JsonAsData.GenerateJson(10, 10, options);
+        var json = JsonAsData.GenerateJson(options);
 
         try
         {
@@ -118,7 +141,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
 
         for (int i = 0; i < 10000; i++)
         {
-            var json = JsonAsData.GenerateJson(10, 10, options);
+            var json = JsonAsData.GenerateJson(options);
             try
             {
                 JsonNode.Parse(json);
@@ -139,7 +162,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
         for (int i = 0; i < 100000; i++)
         {
             var seed = _seed + i;
-            var json = JsonAsData.GenerateJson(10, 10, options, seed);
+            var json = JsonAsData.GenerateJson(options, seed);
             try
             {
                 var jsonDocument = JsonNode.Parse(json);
@@ -156,7 +179,7 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
     {
         var options = GeneratorConfig.Default();
 
-        var json = JsonAsData.GenerateJson(10, 10, options, _seed);
+        var json = JsonAsData.GenerateJson(options, _seed);
 
         try
         {
@@ -179,11 +202,11 @@ public class GrammarAsDataTests(ITestOutputHelper outputHelper)
             var seed = _seed + i;
             var options = GeneratorConfig.RandomConfig(seed);
 
-            for (int j = 0; j < 10; j++)
+            for (int j = 0; j < 1000; j++)
             {
                 var innerSeed = seed + j;
 
-                var json = JsonAsData.GenerateJson(10, 10, options, innerSeed);
+                var json = JsonAsData.GenerateJson(options, innerSeed);
 
                 try
                 {
