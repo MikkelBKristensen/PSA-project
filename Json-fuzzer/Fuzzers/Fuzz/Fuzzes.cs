@@ -5,6 +5,6 @@ public enum Fuzzes
     Delete,
     Replace,
     Insert,
-    Flip,
-    BitFlip,
+    //Flip,
+    //BitFlip,
 }
