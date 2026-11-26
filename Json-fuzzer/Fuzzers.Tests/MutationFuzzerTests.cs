@@ -7,7 +7,7 @@ public class MutationFuzzerTests(ITestOutputHelper outputHelper)
 {
     private static FuzzerConfig config => new FuzzerConfig
     {
-        Mutations = 0,
+        Mutations = 10,
         GenerateFatMutations = false
     };
     
@@ -16,7 +16,7 @@ public class MutationFuzzerTests(ITestOutputHelper outputHelper)
     [Fact]
     public void FuzzString_FuzzesAStringLol()
     {
-        var input = "Hello World";
+        const string input = "Hello World";
         var fuzzedString = _fuzzer.Fuzz(input);
         
         outputHelper.WriteLine(fuzzedString);
